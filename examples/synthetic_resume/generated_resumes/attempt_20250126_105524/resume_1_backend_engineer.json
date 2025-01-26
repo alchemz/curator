@@ -1,0 +1,90 @@
+{
+  "personal_info": {
+    "email": "charlotte.garcia@email.com",
+    "github": "github.com/cgarcia",
+    "linkedin": "linkedin.com/in/charlottegarcia",
+    "location": "San Francisco, CA",
+    "name": "Charlotte Garcia",
+    "phone": "555-123-4567",
+    "portfolio": "charlottegarcia.dev"
+  },
+  "summary": "Mid-Senior Backend Engineer with 6 years of experience designing and scaling distributed systems. Proven expertise in Java, Spring Boot, and Kubernetes, with a track record of optimizing system performance by up to 40% and leading cross-functional technical initiatives. Passionate about building resilient, high-throughput backend services for enterprise-scale applications.",
+  "experience": [
+    {
+      "company": "TechCorp Solutions",
+      "end_date": "Present",
+      "location": "San Francisco, CA",
+      "responsibilities": [
+        "Led migration of legacy monolith to cloud-native microservices architecture using Kubernetes, reducing latency by 30% and improving system uptime to 99.99%",
+        "Designed and implemented distributed caching layer using Redis, improving API response times by 40% for 10M+ daily requests",
+        "Architectured event-driven order processing system handling 5,000+ transactions/sec with Kafka and Spring Boot",
+        "Mentored 4 junior engineers on best practices for containerization and CI/CD pipelines"
+      ],
+      "start_date": "2020",
+      "technologies": [
+        "Java 11",
+        "Spring Boot",
+        "Kubernetes",
+        "AWS",
+        "Docker",
+        "Redis",
+        "Kafka",
+        "Prometheus"
+      ],
+      "title": "Senior Backend Engineer"
+    },
+    {
+      "company": "InnovateCloud",
+      "end_date": "2020",
+      "location": "Seattle, WA",
+      "responsibilities": [
+        "Developed real-time analytics pipeline processing 2TB/day of IoT data using Spring Batch and Apache Flink",
+        "Implemented automated scaling solution for Kubernetes clusters reducing infrastructure costs by 25%",
+        "Optimized database queries reducing average response time from 450ms to 120ms",
+        "Introduced comprehensive monitoring with Grafana and ELK stack, decreasing MTTR by 60%"
+      ],
+      "start_date": "2018",
+      "technologies": [
+        "Java 8",
+        "Spring Framework",
+        "Kubernetes",
+        "PostgreSQL",
+        "Flink",
+        "Grafana",
+        "ELK Stack"
+      ],
+      "title": "Backend Engineer"
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "gpa": 3.8,
+      "location": "Stanford, CA",
+      "relevant_coursework": [
+        "Distributed Systems",
+        "Cloud Computing Architecture",
+        "Advanced Algorithms",
+        "Database Systems"
+      ],
+      "university": "Stanford University",
+      "year": 2017
+    }
+  ],
+  "skills": [
+    "Java & JVM Optimization",
+    "Microservices Architecture",
+    "Kubernetes Orchestration",
+    "AWS/GCP Cloud Services",
+    "Event-Driven Systems",
+    "Performance Tuning",
+    "CI/CD Pipelines",
+    "Distributed Caching"
+  ],
+  "certifications": [
+    "AWS Certified Developer - Associate",
+    "Certified Kubernetes Administrator (CKA)",
+    "Oracle Certified Professional: Java SE 11 Developer"
+  ]
+}

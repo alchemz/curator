@@ -1,0 +1,93 @@
+{
+  "personal_info": {
+    "email": "emily.johnson@email.com",
+    "github": "github.com/emilyjohnson",
+    "linkedin": "linkedin.com/in/emily-johnson",
+    "location": "Seattle, WA",
+    "name": "Emily Johnson",
+    "phone": "206-555-0198",
+    "portfolio": "emilyjohnson.dev"
+  },
+  "summary": "Senior Data Engineer with 7+ years of experience designing and optimizing scalable data pipelines. Specialized in distributed data processing using Python and Spark, with extensive cloud expertise in AWS and Azure. Proven track record of leading teams to implement enterprise-grade data solutions handling 10TB+ daily workloads.",
+  "experience": [
+    {
+      "company": "TechData Corp",
+      "end_date": "Present",
+      "location": "Seattle, WA",
+      "responsibilities": [
+        "Designed real-time analytics pipeline processing 15M events/day using Spark Structured Streaming",
+        "Reduced ETL latency by 40% through PySpark optimizations and dynamic resource allocation",
+        "Led migration of legacy Hadoop system to cloud-native architecture on AWS (Glue, Redshift, S3)",
+        "Implemented CI/CD pipelines for data workflows using Airflow and GitHub Actions"
+      ],
+      "start_date": "03/2021",
+      "technologies": [
+        "Python",
+        "Spark",
+        "AWS",
+        "Airflow",
+        "Kafka",
+        "Parquet",
+        "Docker"
+      ],
+      "title": "Senior Data Engineer"
+    },
+    {
+      "company": "CloudAnalytics Solutions",
+      "end_date": "02/2021",
+      "location": "San Francisco, CA",
+      "responsibilities": [
+        "Built scalable data ingestion framework handling 10TB+ daily from 50+ data sources",
+        "Developed automated data quality monitoring system reducing data errors by 65%",
+        "Optimized Spark clusters achieving 30% cost reduction through performance tuning",
+        "Integrated Azure Data Factory pipelines with Databricks for ML feature engineering"
+      ],
+      "start_date": "06/2017",
+      "technologies": [
+        "Python",
+        "Spark",
+        "Azure",
+        "SQL",
+        "Hadoop",
+        "Hive",
+        "Power BI"
+      ],
+      "title": "Data Engineer"
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "gpa": 3.7,
+      "location": "Seattle, WA",
+      "relevant_coursework": [
+        "Data Structures & Algorithms",
+        "Database Systems",
+        "Distributed Systems",
+        "Cloud Computing",
+        "Big Data Analytics"
+      ],
+      "university": "University of Washington",
+      "year": 2016
+    }
+  ],
+  "skills": [
+    "Python (Advanced)",
+    "Apache Spark",
+    "AWS (Glue, Redshift, S3)",
+    "Azure (Data Factory, Databricks)",
+    "SQL & NoSQL Databases",
+    "Data Modeling",
+    "ETL/ELT Architecture",
+    "Distributed Systems",
+    "Stream Processing",
+    "Terraform",
+    "Kubernetes",
+    "Data Governance"
+  ],
+  "certifications": [
+    "AWS Certified Data Analytics - Specialty",
+    "Google Cloud Professional Data Engineer"
+  ]
+}

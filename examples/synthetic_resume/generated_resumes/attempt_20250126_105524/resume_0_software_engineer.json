@@ -1,0 +1,84 @@
+{
+  "personal_info": {
+    "email": "nora.patel@email.com",
+    "github": "github.com/npatel",
+    "linkedin": "linkedin.com/in/norapatel",
+    "location": "San Francisco, CA",
+    "name": "Nora Patel",
+    "phone": "+1 (415) 555-8923",
+    "portfolio": "norapatel.dev"
+  },
+  "summary": "Mid-level Full-stack Engineer with 5+ years of experience building scalable web applications. Proficient in Python, JavaScript, React, and AWS with a track record of delivering user-centric solutions. Led cross-functional teams to improve application performance by 30% and reduce deployment times by 25% through CI/CD optimization.",
+  "experience": [
+    {
+      "company": "TechNova Solutions",
+      "end_date": "Present",
+      "location": "San Francisco, CA",
+      "responsibilities": [
+        "Led a 5-member team to redesign a customer analytics dashboard using React and Django, increasing user engagement by 40%",
+        "Reduced API response times by 35% by optimizing PostgreSQL queries and implementing Redis caching",
+        "Automated deployment pipelines using AWS CodePipeline and Docker, cutting deployment failures by 50%",
+        "Migrated legacy monolithic application to microservices architecture, improving scalability for 500k+ monthly users"
+      ],
+      "start_date": "Jun 2020",
+      "technologies": [
+        "Python",
+        "React",
+        "AWS",
+        "Docker",
+        "PostgreSQL",
+        "Redis"
+      ],
+      "title": "Mid-level Software Engineer"
+    },
+    {
+      "company": "CodeCrafters",
+      "end_date": "May 2020",
+      "location": "San Jose, CA",
+      "responsibilities": [
+        "Developed 15+ reusable React components adopted across 5 client projects, reducing development time by 20%",
+        "Built RESTful APIs with Node.js and Flask to integrate third-party payment systems",
+        "Implemented automated testing suite using Jest and Selenium, increasing test coverage from 60% to 90%"
+      ],
+      "start_date": "Aug 2018",
+      "technologies": [
+        "JavaScript",
+        "Node.js",
+        "Flask",
+        "MongoDB",
+        "Jest"
+      ],
+      "title": "Junior Software Developer"
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "gpa": 3.6,
+      "location": "Berkeley, CA",
+      "relevant_coursework": [
+        "Data Structures & Algorithms",
+        "Cloud Computing",
+        "Database Systems",
+        "Web Development"
+      ],
+      "university": "University of California, Berkeley",
+      "year": 2018
+    }
+  ],
+  "skills": [
+    "Python",
+    "JavaScript (ES6+)",
+    "React & Redux",
+    "AWS (EC2, S3, Lambda)",
+    "RESTful API Design",
+    "CI/CD Pipelines",
+    "Docker",
+    "Agile Development"
+  ],
+  "certifications": [
+    "AWS Certified Developer - Associate (2022)",
+    "React Professional Certification (Coursera, 2021)"
+  ]
+}
