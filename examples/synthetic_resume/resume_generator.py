@@ -50,7 +50,6 @@ class ResumeGenerator(curator.LLM):
 
     def prompt(self, input: dict) -> List[dict]:
         """Generate the prompt as a list of messages"""
-        # Get role variation from input or use default
         role_variation = input.get('role_variation', {
             'role': 'Software Engineer',
             'level': 'Mid-level',
@@ -58,9 +57,72 @@ class ResumeGenerator(curator.LLM):
             'tech_stack': 'Python, JavaScript, and cloud technologies',
             'years': '4-6'
         })
+        
+        # Get recommended sections
+        sections = role_variation.get('recommended_sections', ["summary", "experience", "education", "skills"])
+        
+        # Build dynamic schema based on sections
+        schema = {
+            "personal_info": {
+                "name": "string",
+                "email": "string",
+                "phone": "string",
+                "location": "string",
+                "linkedin": "string",
+                "github": "string (optional)",
+                "portfolio": "string (optional)"
+            }
+        }
+        
+        # Add required sections
+        for section in sections:
+            if section == "summary":
+                schema["summary"] = "string"
+            elif section == "experience":
+                schema["experience"] = [{
+                    "title": "string",
+                    "company": "string",
+                    "location": "string",
+                    "start_date": "string",
+                    "end_date": "string",
+                    "responsibilities": ["string"],
+                    "technologies": ["string"]
+                }]
+            elif section == "education":
+                schema["education"] = [{
+                    "degree": "string",
+                    "field": "string",
+                    "university": "string",
+                    "location": "string",
+                    "year": "number",
+                    "gpa": "number",
+                    "relevant_coursework": ["string"]
+                }]
+            elif section == "skills":
+                schema["skills"] = ["string"]
+            elif section == "publications":
+                schema["publications"] = [{
+                    "title": "string",
+                    "authors": ["string"],
+                    "journal": "string",
+                    "year": "number",
+                    "link": "string (optional)"
+                }]
+            # ... add other section schemas as needed ...
 
         return [
-            {"role": "system", "content": RESUME_SYSTEM_PROMPT},
+            {"role": "system", "content": f"""You are a professional resume writer. Create a realistic and detailed tech industry resume.
+            Your response must be a valid JSON object that follows this exact structure:
+            
+            {json.dumps(schema, indent=2)}
+            
+            Ensure:
+            1. All dates are in YYYY-MM format
+            2. GPA is a number between 0.0 and 4.0
+            3. Year is a four-digit number
+            4. All arrays must contain at least one item
+            
+            Return only the JSON object, no additional text."""},
             {"role": "user", "content": generate_user_prompt(role_variation)}
         ]
 

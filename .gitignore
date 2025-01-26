@@ -2,3 +2,8 @@
 .DS_Store
 __pycache__
 .vscode
+
+# Environment variables
+.env
+*/.env
+**/.env

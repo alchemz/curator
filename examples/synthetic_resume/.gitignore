@@ -1,3 +1,8 @@
+# Environment variables
+.env
+*/.env
+**/.env
+
 # Generated resumes
 generated_resumes/
 
@@ -41,4 +46,4 @@ wheels/
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db 
+Thumbs.db ../../.env
