@@ -4,59 +4,50 @@ from fpdf.enums import XPos, YPos
 import os
 from typing import Dict, Any
 import re
+from font_config import get_font_style
 
 class ResumePDF(FPDF):
     """Custom PDF class for resume generation"""
     
-    def __init__(self):
+    def __init__(self, font_style: Dict):
         super().__init__()
-        # Choose a random font family for this resume
-        self.font_family = random.choice(['helvetica', 'times', 'courier'])
+        self.font_style = font_style
+        
+        # Map font names to FPDF built-in fonts
+        font_mapping = {
+            'helvetica': 'helvetica',
+            'times': 'times',
+            'arial': 'helvetica',  # Use helvetica as fallback for arial
+        }
+        
+        self.font_family = font_mapping.get(font_style["name"].lower(), 'helvetica')
+        self.bullet = '-'  # Simple dash for bullet points
+        
+        # Set default font
         self.set_font(self.font_family)
-        # Set margins
-        self.set_margins(15, 15, 15)
+        
         self.set_auto_page_break(auto=True, margin=15)
-        # Set bullet point based on font
-        self.bullet = '*' if self.font_family == 'courier' else '-'
+        self.set_margins(15, 15, 15)
 
     def sanitize_text(self, text: str) -> str:
         """Sanitize text to handle special characters"""
-        # Replace common special characters with ASCII alternatives
+        if not isinstance(text, str):
+            text = str(text)
+        
+        # Only replace specific problematic characters
         replacements = {
+            '•': '-',  # bullet to dash
             '–': '-',  # en dash
             '—': '-',  # em dash
-            '"': '"',  # curly quotes
-            '"': '"',
-            ''': "'",  # curly apostrophes
-            ''': "'",
-            '•': '-',  # bullet points
+            '"': '"',  # smart quotes
+            '"': '"',  # smart quotes
+            ''': "'",  # smart quotes
+            ''': "'",  # smart quotes
             '…': '...',  # ellipsis
-            '©': '(c)',
-            '®': '(R)',
-            '™': '(TM)',
-            '°': 'deg',
-            '±': '+/-',
-            '×': 'x',
-            '÷': '/',
-            '≤': '<=',
-            '≥': '>=',
-            '≠': '!=',
-            '∞': 'inf',
-            '′': "'",
-            '″': '"',
-            '\u200b': '',  # zero-width space
-            '\u200e': '',  # left-to-right mark
-            '\u200f': '',  # right-to-left mark
-            '\ufeff': '',  # zero-width no-break space
         }
         
-        # Apply all replacements
         for old, new in replacements.items():
             text = text.replace(old, new)
-        
-        # Replace any remaining non-ASCII characters with their closest ASCII equivalent
-        text = text.encode('ascii', 'replace').decode()
-        text = text.replace('?', '')  # Remove the replacement character
         
         return text
 
@@ -64,60 +55,25 @@ class ResumePDF(FPDF):
         """Custom header with consistent font family"""
         self.set_font(self.font_family)
 
-    def wrapped_cell(self, w, h, txt, border=0, align='L', new_x=XPos.LMARGIN, new_y=YPos.NEXT):
-        """Custom cell with text wrapping"""
-        # Sanitize text before processing
-        txt = self.sanitize_text(txt)
-        
-        # Replace bullet points with font-appropriate version
-        txt = txt.replace('•', self.bullet)
-        
+    def wrapped_cell(self, w: float, h: float, txt: str, border: int = 0, align: str = 'L', fill: bool = False):
+        """Add a wrapped cell with sanitized text"""
         # Get the current position
         x = self.get_x()
         y = self.get_y()
         
-        # Calculate available width
-        available_width = w if w > 0 else self.epw
+        # Sanitize the text before processing
+        txt = self.sanitize_text(txt)
         
-        # For Courier font, reduce the text length threshold
-        if self.font_family == 'courier':
-            available_width = available_width * 0.85  # Reduce width for better wrapping
-        
-        # Split the text into lines that fit the width
-        lines = []
-        words = txt.split()
-        current_line = []
-        
-        for word in words:
-            current_line.append(word)
-            test_line = ' '.join(current_line)
-            if self.get_string_width(test_line) > available_width:
-                if len(current_line) > 1:
-                    current_line.pop()
-                    lines.append(' '.join(current_line))
-                    current_line = [word]
-                else:
-                    lines.append(test_line)
-                    current_line = []
-        
-        if current_line:
-            lines.append(' '.join(current_line))
+        # Calculate wrapped lines
+        lines = self.multi_cell(w, h, txt, border, align, fill, split_only=True)
         
         # Print each line
         for i, line in enumerate(lines):
-            self.set_xy(x, y + i * h)
-            self.cell(w, h, line, border, 0, align)
-        
-        # Move to the next position
-        if new_x == XPos.LMARGIN:
-            self.set_x(self.l_margin)
-        elif new_x == XPos.RIGHT:
-            self.set_x(self.r_margin)
-        
-        if new_y == YPos.NEXT:
-            self.set_y(y + len(lines) * h)
-        
-        return len(lines)  # Return number of lines used
+            self.set_xy(x, y + i*h)
+            if i == len(lines) - 1:
+                self.cell(w, h, line, 0, 1, align)
+            else:
+                self.cell(w, h, line, 0, 2, align)
 
     def format_skills(self, skills):
         """Format skills into columns for better space usage"""
@@ -213,15 +169,19 @@ class ResumePDF(FPDF):
 
 def create_pdf(resume_data: Dict, output_path: str) -> bool:
     """Create a PDF version of the resume"""
-    pdf = ResumePDF()
+    # Get font style based on role
+    role = resume_data.get("experience", [{}])[0].get("title", "Software Engineer")
+    font_style = get_font_style(role)
+    
+    pdf = ResumePDF(font_style)
     pdf.add_page()
     
     # Personal Information - Name
-    pdf.set_font(pdf.font_family, 'B', 14)
+    pdf.set_font(pdf.font_family, 'B', font_style["header_size"])
     pdf.cell(0, 10, resume_data["personal_info"]["name"], align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     
     # Contact Information - Split into two lines if needed
-    pdf.set_font(pdf.font_family, '', 10)
+    pdf.set_font(pdf.font_family, '', font_style["body_size"])
     
     # First line: Email, Phone, Location
     line1_items = [
@@ -245,25 +205,24 @@ def create_pdf(resume_data: Dict, output_path: str) -> bool:
     
     # Summary
     if resume_data.get("summary"):
-        pdf.ln(3)  # Reduced spacing
-        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.ln(3)
+        pdf.set_font(pdf.font_family, 'B', font_style["section_size"])
         pdf.cell(0, 8, "Summary", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.set_font(pdf.font_family, '', 10)
+        pdf.set_font(pdf.font_family, '', font_style["body_size"])
         pdf.wrapped_cell(0, 5, resume_data["summary"])
     
     # Experience
     if resume_data.get("experience"):
-        pdf.ln(3)  # Reduced spacing
-        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.ln(3)
+        pdf.set_font(pdf.font_family, 'B', font_style["section_size"])
         pdf.cell(0, 8, "Experience", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.set_font(pdf.font_family, '', 10)
         
         for exp in resume_data["experience"]:
-            pdf.set_font(pdf.font_family, 'B', 10)
+            pdf.set_font(pdf.font_family, 'B', font_style["body_size"])
             pdf.cell(0, 5, f"{exp['title']} - {exp['company']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-            pdf.set_font(pdf.font_family, 'I', 10)
+            pdf.set_font(pdf.font_family, 'I', font_style["body_size"])
             pdf.cell(0, 5, f"{exp['location']} | {exp['start_date']} - {exp['end_date']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-            pdf.set_font(pdf.font_family, '', 10)
+            pdf.set_font(pdf.font_family, '', font_style["body_size"])
             
             for resp in exp["responsibilities"]:
                 pdf.wrapped_cell(0, 5, f"{pdf.bullet} {resp}")
@@ -274,47 +233,42 @@ def create_pdf(resume_data: Dict, output_path: str) -> bool:
     
     # Education
     if resume_data.get("education"):
-        pdf.ln(3)  # Reduced spacing
-        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.ln(3)
+        pdf.set_font(pdf.font_family, 'B', font_style["section_size"])
         pdf.cell(0, 8, "Education", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.set_font(pdf.font_family, '', 10)
         
         for edu in resume_data["education"]:
-            pdf.set_font(pdf.font_family, 'B', 10)
+            pdf.set_font(pdf.font_family, 'B', font_style["body_size"])
             pdf.cell(0, 5, f"{edu['degree']} in {edu['field']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-            pdf.set_font(pdf.font_family, 'I', 10)
+            pdf.set_font(pdf.font_family, 'I', font_style["body_size"])
             pdf.cell(0, 5, f"{edu['university']} | {edu['location']} | {edu['year']} | GPA: {edu['gpa']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-            pdf.set_font(pdf.font_family, '', 10)
+            pdf.set_font(pdf.font_family, '', font_style["body_size"])
             if edu.get("relevant_coursework"):
                 pdf.wrapped_cell(0, 5, f"Relevant Coursework: {', '.join(edu['relevant_coursework'])}")
             pdf.ln(2)  # Small space between education entries
     
     # Skills
     if resume_data.get("skills"):
-        pdf.ln(3)  # Reduced spacing
-        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.ln(3)
+        pdf.set_font(pdf.font_family, 'B', font_style["section_size"])
         pdf.cell(0, 8, "Skills", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.set_font(pdf.font_family, '', 10)
+        pdf.set_font(pdf.font_family, '', font_style["body_size"])
         
-        # Group skills into chunks of 4-5 per line
-        skills = resume_data["skills"]
-        chunk_size = 4
-        for i in range(0, len(skills), chunk_size):
-            chunk = skills[i:i + chunk_size]
-            pdf.cell(0, 5, " | ".join(f"{pdf.bullet} {skill}" for skill in chunk), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        # Format skills with bullet points, one per line
+        for skill in resume_data["skills"]:
+            pdf.cell(0, 5, f"{pdf.bullet} {skill}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     
     # Publications for ML/AI roles
     if resume_data.get("publications"):
-        pdf.ln(3)  # Reduced spacing
-        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.ln(3)
+        pdf.set_font(pdf.font_family, 'B', font_style["section_size"])
         pdf.cell(0, 8, "Publications", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.set_font(pdf.font_family, '', 10)
         
         for pub in resume_data["publications"]:
             if isinstance(pub, dict):
-                pdf.set_font(pdf.font_family, 'B', 10)
+                pdf.set_font(pdf.font_family, 'B', font_style["body_size"])
                 pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(pub['title'])}")
-                pdf.set_font(pdf.font_family, '', 10)
+                pdf.set_font(pdf.font_family, '', font_style["body_size"])
                 if pub.get("authors"):
                     pdf.wrapped_cell(0, 5, f"    Authors: {pdf.sanitize_text(', '.join(pub['authors']))}")
                 if pub.get("journal"):
@@ -327,16 +281,15 @@ def create_pdf(resume_data: Dict, output_path: str) -> bool:
     
     # Research Projects
     if resume_data.get("research_projects"):
-        pdf.ln(3)  # Reduced spacing
-        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.ln(3)
+        pdf.set_font(pdf.font_family, 'B', font_style["section_size"])
         pdf.cell(0, 8, "Research Projects", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.set_font(pdf.font_family, '', 10)
         
         for project in resume_data["research_projects"]:
             if isinstance(project, dict):
-                pdf.set_font(pdf.font_family, 'B', 10)
+                pdf.set_font(pdf.font_family, 'B', font_style["body_size"])
                 pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(project['title'])}")
-                pdf.set_font(pdf.font_family, '', 10)
+                pdf.set_font(pdf.font_family, '', font_style["body_size"])
                 if project.get("description"):
                     pdf.wrapped_cell(0, 5, f"    {pdf.sanitize_text(project['description'])}")
                 if project.get("technologies"):
