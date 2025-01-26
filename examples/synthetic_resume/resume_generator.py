@@ -3,7 +3,7 @@ import json
 import os
 import re
 import argparse
-from typing import List
+from typing import List, Dict
 from datetime import datetime
 from dotenv import load_dotenv
 from bespokelabs import curator
@@ -42,11 +42,27 @@ class ResumeGenerator(curator.LLM):
             }
         )
 
-    def __call__(self, dataset=None):
-        """Override to handle empty input case"""
-        if dataset is None:
-            dataset = [{}]  # Pass empty dict as input
-        return super().__call__(dataset)
+    def __call__(self, dataset: List[Dict]) -> List[Dict]:
+        """Generate resume data from role variation"""
+        try:
+            # Generate prompt
+            messages = self.prompt(dataset[0])
+            
+            # Make LLM call using self directly since we inherit from curator.LLM
+            response = super().__call__([{"messages": messages}])
+            logger.info(f"LLM response received: {response}")
+            
+            # Parse response
+            result = self.parse_response(response)
+            if not result:
+                logger.error("Failed to parse LLM response")
+                return []
+                
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in resume generation: {str(e)}")
+            return []
 
     def prompt(self, input: dict) -> List[dict]:
         """Generate the prompt as a list of messages"""
@@ -140,31 +156,69 @@ class ResumeGenerator(curator.LLM):
             {"role": "user", "content": generate_user_prompt(role_variation)}
         ]
 
-    def parse(self, input: dict, response: dict) -> dict:
-        """Parse the LLM response to extract the resume data"""
+    def parse_response(self, response: Dict) -> List[Dict]:
+        """Parse LLM response into resume data"""
         try:
-            # Extract content from the completions object
-            content = response["choices"][0]["message"]["content"]
+            # Handle Dataset response
+            if hasattr(response, 'to_dict'):
+                response_dict = response[0]
+                content = response_dict['choices'][0]['message']['content']
+            else:
+                content = response.get('choices', [{}])[0].get('message', {}).get('content', '')
             
-            # Remove markdown code block if present
-            if content.startswith("```json"):
-                content = content.replace("```json", "", 1)
-            if content.endswith("```"):
-                content = content[:-3]
+            logger.info(f"Raw content before cleaning: {content}")
             
-            # Clean up any remaining whitespace
-            content = content.strip()
+            # Clean the content
+            content = content.replace('```json', '').replace('```', '').strip()
+            content = content.encode('ascii', 'ignore').decode('ascii')
             
-            # Parse the content into Resume format
-            parsed = json.loads(content)
+            logger.info(f"Cleaned content: {content}")
             
-            # Validate against our Pydantic model and convert to dict
-            resume = Resume(**parsed)
-            return resume.model_dump()  # Updated from dict() to model_dump()
+            try:
+                # Parse JSON
+                resume_data = json.loads(content)
+                logger.info(f"Parsed JSON: {json.dumps(resume_data, indent=2)}")
+                
+                # Ensure skills is a simple list of strings
+                if 'skills' in resume_data:
+                    if isinstance(resume_data['skills'], dict):
+                        # If it's a dict with items, extract the items
+                        resume_data['skills'] = resume_data['skills'].get('items', [])
+                    elif isinstance(resume_data['skills'], list):
+                        # If it's a list of dicts, extract just the skill strings
+                        if resume_data['skills'] and isinstance(resume_data['skills'][0], dict):
+                            all_skills = []
+                            for category in resume_data['skills']:
+                                if isinstance(category, dict):
+                                    all_skills.extend(category.get('items', []))
+                            resume_data['skills'] = all_skills
+                else:
+                    resume_data['skills'] = []
+                
+                # Ensure required top-level fields exist
+                required_fields = ['personal_info', 'summary', 'experience', 'education', 'skills']
+                for field in required_fields:
+                    if field not in resume_data:
+                        logger.error(f"Missing required field: {field}")
+                        resume_data[field] = {} if field == 'personal_info' else []
+                
+                # Validate against model
+                resume = Resume(**resume_data)
+                result = resume.dict()
+                logger.info(f"Validated resume data: {json.dumps(result, indent=2)}")
+                
+                return [result]
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON parsing error: {str(e)}")
+                logger.debug(f"Content that failed to parse: {content}")
+                return []
+                
         except Exception as e:
-            print(f"Debug: Error parsing response: {str(e)}")
-            print(f"Debug: Raw response: {response}")
-            raise
+            logger.error(f"Error parsing resume data: {str(e)}")
+            logger.error(f"Response type: {type(response)}")
+            logger.error(f"Response content: {response}")
+            return []
 
 def main():
     """Generate synthetic resumes using curator and DeepSeek API"""

@@ -43,21 +43,21 @@ class Resume(BaseModel):
     summary: str = Field(description="Professional summary")
     experience: List[Experience] = Field(description="Work experience entries")
     education: List[Education] = Field(description="Education entries")
-    skills: List[str] = Field(description="Technical and professional skills")
+    skills: List[str] = Field(description="List of technical and professional skills")
     
     # Make all these truly optional
-    publications: Optional[List[Dict[str, Any]]] = None
-    certifications: Optional[List[Dict[str, Any]]] = None
-    awards: Optional[List[str]] = None
-    languages: Optional[List[Dict[str, str]]] = None
-    research_projects: Optional[List[Dict[str, Any]]] = None
-    portfolio: Optional[List[Dict[str, Any]]] = None
-    open_source: Optional[List[Dict[str, Any]]] = None
-    system_architecture: Optional[List[Dict[str, Any]]] = None
-    infrastructure: Optional[List[Dict[str, Any]]] = None
-    security: Optional[List[Dict[str, Any]]] = None
-    app_store: Optional[List[Dict[str, Any]]] = None
-    volunteer: Optional[List[Dict[str, Any]]] = None
+    publications: Optional[List[Dict[str, Any]]] = Field(None, description="Academic publications")
+    certifications: Optional[List[Dict[str, Any]]] = Field(None, description="Professional certifications")
+    awards: Optional[List[str]] = Field(None, description="Professional awards and recognition")
+    languages: Optional[List[Dict[str, str]]] = Field(None, description="Language proficiencies")
+    research_projects: Optional[List[Dict[str, Any]]] = Field(None, description="Research project details")
+    portfolio: Optional[List[Dict[str, Any]]] = Field(None, description="Portfolio projects")
+    open_source: Optional[List[Dict[str, Any]]] = Field(None, description="Open source contributions")
+    system_architecture: Optional[List[Dict[str, Any]]] = Field(None, description="System architecture experience")
+    infrastructure: Optional[List[Dict[str, Any]]] = Field(None, description="Infrastructure and DevOps experience")
+    security: Optional[List[Dict[str, Any]]] = Field(None, description="Security expertise")
+    app_store: Optional[List[Dict[str, Any]]] = Field(None, description="App store publications")
+    volunteer: Optional[List[Dict[str, Any]]] = Field(None, description="Volunteer work")
 
     class Config:
         extra = "allow" 

@@ -77,8 +77,20 @@ class ResumePDF(FPDF):
 
     def format_skills(self, skills):
         """Format skills into columns for better space usage"""
-        # Sanitize all skills first
-        skills = [self.sanitize_text(skill) for skill in skills]
+        # Handle case where skills is already a flat list of strings
+        if skills and isinstance(skills[0], str):
+            # Sanitize all skills
+            skills = [self.sanitize_text(skill) for skill in skills]
+        # Handle structured skills case
+        elif skills and isinstance(skills[0], dict):
+            flattened_skills = []
+            for category in skills:
+                if isinstance(category, dict):
+                    if 'items' in category:
+                        flattened_skills.extend(category['items'])
+                    elif 'skills' in category:
+                        flattened_skills.extend(category['skills'])
+            skills = [self.sanitize_text(skill) for skill in flattened_skills]
         
         # For Courier font, use fewer columns due to wider characters
         num_columns = 2 if self.font_family == 'courier' else 3
@@ -89,63 +101,7 @@ class ResumePDF(FPDF):
         for i in range(0, len(skills), skills_per_column):
             columns.append(skills[i:i + skills_per_column])
         
-        # Calculate column width with more spacing
-        spacing = 15  # Increased spacing between columns
-        col_width = (self.epw - (num_columns - 1) * spacing) / num_columns
-        
-        # Current position
-        x_start = self.get_x()
-        y_start = self.get_y()
-        max_y = y_start
-        
-        # Print each column
-        for i, column in enumerate(columns):
-            current_x = x_start + i * (col_width + spacing)
-            current_y = y_start
-            
-            for skill in column:
-                self.set_xy(current_x, current_y)
-                # Pre-calculate wrapped lines to determine height
-                lines = []
-                words = skill.split()
-                current_line = []
-                
-                for word in words:
-                    current_line.append(word)
-                    test_line = ' '.join(current_line)
-                    if self.get_string_width(f"{self.bullet} {test_line}") > col_width:
-                        if len(current_line) > 1:
-                            current_line.pop()
-                            lines.append(' '.join(current_line))
-                            current_line = [word]
-                        else:
-                            lines.append(test_line)
-                            current_line = []
-                
-                if current_line:
-                    lines.append(' '.join(current_line))
-                
-                # Print each line of the skill
-                for line in lines:
-                    self.set_xy(current_x, current_y)
-                    if line == lines[0]:  # First line includes bullet
-                        self.cell(col_width, 5, f"{self.bullet} {line}", 0, 1)
-                    else:  # Continuation lines are indented
-                        self.cell(col_width, 5, f"    {line}", 0, 1)
-                    current_y += 5
-                
-                if not lines:  # If no wrapping occurred
-                    self.cell(col_width, 5, f"{self.bullet} {skill}", 0, 1)
-                    current_y += 5
-                
-                # Add some spacing between skills
-                current_y += 2
-                
-                if current_y > max_y:
-                    max_y = current_y
-        
-        # Move to position after all columns
-        self.set_xy(x_start, max_y)
+        return columns
 
     def add_dynamic_section(self, title: str, content: Any):
         """Add a dynamic section to the resume"""
@@ -252,11 +208,30 @@ def create_pdf(resume_data: Dict, output_path: str) -> bool:
         pdf.ln(3)
         pdf.set_font(pdf.font_family, 'B', font_style["section_size"])
         pdf.cell(0, 8, "Skills", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        
+        # Set font for skills
         pdf.set_font(pdf.font_family, '', font_style["body_size"])
         
-        # Format skills with bullet points, one per line
-        for skill in resume_data["skills"]:
-            pdf.cell(0, 5, f"{pdf.bullet} {skill}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        # Join all skills with commas
+        skills_text = ", ".join(resume_data["skills"])
+        
+        # Handle long skill lists with wrapping
+        words = skills_text.split(", ")
+        current_line = []
+        
+        for word in words:
+            current_line.append(word)
+            test_line = ", ".join(current_line)
+            if pdf.get_string_width(test_line) > (pdf.w - pdf.l_margin - pdf.r_margin):
+                # Print current line and start new one
+                pdf.cell(0, 5, ", ".join(current_line[:-1]), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                current_line = [word]
+        
+        # Print remaining skills
+        if current_line:
+            pdf.cell(0, 5, ", ".join(current_line), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        
+        pdf.ln(1)  # Small space after skills section
     
     # Publications for ML/AI roles
     if resume_data.get("publications"):
