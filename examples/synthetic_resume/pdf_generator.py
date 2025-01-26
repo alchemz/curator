@@ -297,8 +297,98 @@ def create_pdf(resume_data: Dict, output_path: str) -> bool:
         for cert in resume_data["certifications"]:
             pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(cert)}")
     
+    # Add Publications section for ML/AI roles
+    if resume_data.get("publications"):
+        pdf.ln(5)
+        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.cell(0, 10, "Publications", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_font(pdf.font_family, '', 10)
+        
+        for pub in resume_data["publications"]:
+            if isinstance(pub, dict):
+                # Handle structured publication entry
+                title = pub.get("title", "")
+                authors = pub.get("authors", [])
+                journal = pub.get("journal", "")
+                year = pub.get("year", "")
+                link = pub.get("link", "")
+                
+                pdf.set_font(pdf.font_family, 'B', 10)
+                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(title)}")
+                pdf.set_font(pdf.font_family, '', 10)
+                if authors:
+                    pdf.wrapped_cell(0, 5, f"    Authors: {pdf.sanitize_text(', '.join(authors))}")
+                if journal:
+                    pdf.wrapped_cell(0, 5, f"    {pdf.sanitize_text(journal)} ({year})")
+                if link:
+                    pdf.wrapped_cell(0, 5, f"    Link: {pdf.sanitize_text(link)}")
+            else:
+                # Handle simple string publication entry
+                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(str(pub))}")
+            pdf.ln(2)
+    
+    # Add Research Projects section for ML/AI roles
+    if resume_data.get("research_projects"):
+        pdf.ln(5)
+        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.cell(0, 10, "Research Projects", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_font(pdf.font_family, '', 10)
+        
+        for project in resume_data["research_projects"]:
+            if isinstance(project, dict):
+                # Handle structured project entry
+                title = project.get("title", "")
+                description = project.get("description", "")
+                technologies = project.get("technologies", [])
+                results = project.get("results", [])
+                
+                pdf.set_font(pdf.font_family, 'B', 10)
+                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(title)}")
+                pdf.set_font(pdf.font_family, '', 10)
+                if description:
+                    pdf.wrapped_cell(0, 5, f"    {pdf.sanitize_text(description)}")
+                if technologies:
+                    pdf.wrapped_cell(0, 5, f"    Technologies: {pdf.sanitize_text(', '.join(technologies))}")
+                if results:
+                    for result in results:
+                        pdf.wrapped_cell(0, 5, f"    - {pdf.sanitize_text(result)}")
+            else:
+                # Handle simple string project entry
+                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(str(project))}")
+            pdf.ln(2)
+    
+    # Add any other dynamic sections that might be present
+    dynamic_sections = {
+        "awards": "Awards & Honors",
+        "languages": "Languages",
+        "open_source": "Open Source Contributions",
+        "system_architecture": "System Architecture",
+        "infrastructure": "Infrastructure & DevOps",
+        "security": "Security",
+        "app_store": "App Store Publications",
+        "volunteer": "Volunteer Work"
+    }
+    
+    for section_key, section_title in dynamic_sections.items():
+        if resume_data.get(section_key):
+            pdf.ln(5)
+            pdf.set_font(pdf.font_family, 'B', 12)
+            pdf.cell(0, 10, section_title, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font(pdf.font_family, '', 10)
+            
+            section_data = resume_data[section_key]
+            if isinstance(section_data, list):
+                for item in section_data:
+                    if isinstance(item, dict):
+                        # Handle structured items
+                        for key, value in item.items():
+                            pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(key)}: {pdf.sanitize_text(str(value))}")
+                    else:
+                        # Handle simple string items
+                        pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(str(item))}")
+                    pdf.ln(2)
+    
     try:
-        # Output the PDF directly with the provided path
         pdf.output(output_path)
         return True
     except Exception as e:

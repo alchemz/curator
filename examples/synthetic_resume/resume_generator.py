@@ -60,6 +60,7 @@ class ResumeGenerator(curator.LLM):
         
         # Get recommended sections
         sections = role_variation.get('recommended_sections', ["summary", "experience", "education", "skills"])
+        requires_publications = role_variation.get('requires_publications', False)
         
         # Build dynamic schema based on sections
         schema = {
@@ -100,29 +101,42 @@ class ResumeGenerator(curator.LLM):
                 }]
             elif section == "skills":
                 schema["skills"] = ["string"]
-            elif section == "publications":
+            elif section == "publications" or requires_publications:
                 schema["publications"] = [{
                     "title": "string",
                     "authors": ["string"],
                     "journal": "string",
                     "year": "number",
-                    "link": "string (optional)"
+                    "link": "string (optional)",
+                    "impact_factor": "number (optional)",
+                    "citations": "number (optional)"
                 }]
-            # ... add other section schemas as needed ...
+            # ... other sections ...
+
+        # Build the system prompt with emphasis on publications for ML/AI roles
+        system_prompt = f"""You are a professional resume writer. Create a realistic and detailed tech industry resume.
+        Your response must be a valid JSON object that follows this exact structure:
+        
+        {json.dumps(schema, indent=2)}
+        
+        Ensure:
+        1. All dates are in YYYY-MM format
+        2. GPA is a number between 0.0 and 4.0
+        3. Year is a four-digit number
+        4. All arrays must contain at least one item
+        """
+        
+        if requires_publications:
+            system_prompt += """
+        5. For this ML/AI role, you MUST include at least 2 relevant publications
+        6. Publications should be realistic and related to the role's focus area
+        7. Include both conference and journal publications if possible
+        """
+        
+        system_prompt += "\nReturn only the JSON object, no additional text."
 
         return [
-            {"role": "system", "content": f"""You are a professional resume writer. Create a realistic and detailed tech industry resume.
-            Your response must be a valid JSON object that follows this exact structure:
-            
-            {json.dumps(schema, indent=2)}
-            
-            Ensure:
-            1. All dates are in YYYY-MM format
-            2. GPA is a number between 0.0 and 4.0
-            3. Year is a four-digit number
-            4. All arrays must contain at least one item
-            
-            Return only the JSON object, no additional text."""},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": generate_user_prompt(role_variation)}
         ]
 

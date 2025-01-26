@@ -70,20 +70,25 @@ class RoleGenerator(curator.LLM):
         messages = [
             {
                 "role": "system",
-                "content": """You are an expert in tech industry resumes. Determine which sections should be included 
-                in a resume based on the role and level."""
+                "content": """You are an expert in tech industry resumes. For ML/AI roles, always include research-oriented 
+                sections like publications and research_projects. Determine which sections should be included in a resume 
+                based on the role and level."""
             },
             {
                 "role": "user",
                 "content": f"""For a {level} {role}, what sections should be included in their resume?
-                Consider both standard sections (summary, experience, education, skills) and role-specific sections.
+                
+                For ML/AI roles (Machine Learning Engineer, Data Scientist, Research Engineer, AI Engineer), 
+                ALWAYS include:
+                - publications
+                - research_projects
                 
                 Available sections include:
-                - publications (for research/academic roles)
+                - publications (REQUIRED for ML/AI roles, research positions)
+                - research_projects (REQUIRED for ML/AI roles, R&D positions)
                 - certifications (for specialized technical roles)
                 - awards (for distinguished achievements)
                 - languages (for international/multilingual roles)
-                - research_projects (for R&D roles)
                 - portfolio (for creative/frontend roles)
                 - open_source (for software engineering roles)
                 - system_architecture (for senior/architect roles)
@@ -92,14 +97,17 @@ class RoleGenerator(curator.LLM):
                 - app_store (for mobile developers)
                 - volunteer (for community involvement)
 
+                Standard sections (summary, experience, education, skills) are always included.
+                
                 Return a JSON array of section names that are relevant for this role.
-                Example: ["summary", "experience", "education", "skills", "publications"]"""
+                Example for ML Engineer: ["summary", "experience", "education", "skills", "publications", "research_projects"]"""
             }
         ]
 
         try:
             dataset = [{"messages": messages}]
             response = self(dataset)
+            logger.info(f"Role sections response for {role}: {response}")  # Debug log
             
             if response and len(response) > 0:
                 content = response[0]
@@ -114,6 +122,15 @@ class RoleGenerator(curator.LLM):
                     if content.endswith("```"):
                         content = content[:-3]
                     sections = json.loads(content.strip())
+                    
+                    # Force include publications for ML/AI roles
+                    if any(ml_term in role.lower() for ml_term in ['ml', 'machine learning', 'ai', 'data scientist']):
+                        if 'publications' not in sections:
+                            sections.append('publications')
+                        if 'research_projects' not in sections:
+                            sections.append('research_projects')
+                        logger.info(f"Added required ML sections for {role}")
+                    
                     return sections
 
             return self._get_default_sections()
@@ -149,6 +166,16 @@ class RoleGenerator(curator.LLM):
                     }
                     # Add recommended sections
                     sections = self.get_role_sections(variation['role'], variation['level'])
+                    
+                    # Force include publications for ML/AI roles
+                    if any(ml_term in variation['role'].lower() for ml_term in ['ml', 'machine learning', 'ai', 'data scientist']):
+                        if 'publications' not in sections:
+                            sections.append('publications')
+                        if 'research_projects' not in sections:
+                            sections.append('research_projects')
+                        variation['requires_publications'] = True
+                        logger.info(f"Added mandatory publications for {variation['role']}")
+                    
                     variation['recommended_sections'] = sections
                     variations.append(variation)
                 return variations
