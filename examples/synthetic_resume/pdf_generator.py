@@ -2,7 +2,7 @@ import random
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 import os
-from typing import Dict
+from typing import Dict, Any
 import re
 
 class ResumePDF(FPDF):
@@ -190,6 +190,26 @@ class ResumePDF(FPDF):
         
         # Move to position after all columns
         self.set_xy(x_start, max_y)
+
+    def add_dynamic_section(self, title: str, content: Any):
+        """Add a dynamic section to the resume"""
+        self.ln(5)
+        self.set_font(self.font_family, 'B', 12)
+        self.cell(0, 10, title, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.set_font(self.font_family, '', 10)
+        
+        if isinstance(content, list):
+            for item in content:
+                if isinstance(item, dict):
+                    for key, value in item.items():
+                        self.wrapped_cell(0, 5, f"{key}: {value}")
+                else:
+                    self.wrapped_cell(0, 5, f"{self.bullet} {item}")
+        elif isinstance(content, dict):
+            for key, value in content.items():
+                self.wrapped_cell(0, 5, f"{key}: {value}")
+        else:
+            self.wrapped_cell(0, 5, str(content))
 
 def create_pdf(resume_data: Dict, output_path: str) -> bool:
     """Create a PDF version of the resume"""

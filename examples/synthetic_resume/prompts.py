@@ -1,7 +1,8 @@
 """Prompts for resume generation."""
 
-RESUME_SYSTEM_PROMPT = """You are a professional resume writer. Create a realistic and detailed tech industry resume. 
-Your response must be a valid JSON object with this exact structure, with no additional text or explanation:
+RESUME_SYSTEM_PROMPT = """You are a professional resume writer. Create a realistic and detailed tech industry resume.
+Your response must be a valid JSON object that follows this exact structure:
+
 {
     "personal_info": {
         "name": "string",
@@ -31,9 +32,16 @@ Your response must be a valid JSON object with this exact structure, with no add
         "gpa": number,
         "relevant_coursework": ["string"]
     }],
-    "skills": ["string"],
-    "certifications": ["string"]
-}"""
+    "skills": ["string"]
+}
+
+Ensure:
+1. All dates are in YYYY-MM format
+2. GPA is a number between 0.0 and 4.0
+3. Year is a four-digit number
+4. All arrays must contain at least one item
+
+Return only the JSON object, no additional text."""
 
 def generate_user_prompt(role_variation: dict) -> str:
     """Generate a user prompt for resume creation based on role variation"""

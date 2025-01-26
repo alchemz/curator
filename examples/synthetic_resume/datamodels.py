@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 class PersonalInfo(BaseModel):
@@ -31,11 +31,33 @@ class Education(BaseModel):
     gpa: float = Field(description="GPA on a 4.0 scale")
     relevant_coursework: List[str] = Field(description="List of relevant courses")
 
+class Certification(BaseModel):
+    """Certification entry"""
+    name: str = Field(description="Name of certification")
+    issuer: str = Field(description="Issuing organization")
+    date: str = Field(description="Date of certification")
+
 class Resume(BaseModel):
-    """Complete resume structure"""
+    """Complete resume structure with dynamic sections"""
     personal_info: PersonalInfo = Field(description="Personal and contact information")
     summary: str = Field(description="Professional summary")
     experience: List[Experience] = Field(description="Work experience entries")
     education: List[Education] = Field(description="Education entries")
     skills: List[str] = Field(description="Technical and professional skills")
-    certifications: Optional[List[str]] = Field(description="Professional certifications") 
+    
+    # Make all these truly optional
+    publications: Optional[List[Dict[str, Any]]] = None
+    certifications: Optional[List[Dict[str, Any]]] = None
+    awards: Optional[List[str]] = None
+    languages: Optional[List[Dict[str, str]]] = None
+    research_projects: Optional[List[Dict[str, Any]]] = None
+    portfolio: Optional[List[Dict[str, Any]]] = None
+    open_source: Optional[List[Dict[str, Any]]] = None
+    system_architecture: Optional[List[Dict[str, Any]]] = None
+    infrastructure: Optional[List[Dict[str, Any]]] = None
+    security: Optional[List[Dict[str, Any]]] = None
+    app_store: Optional[List[Dict[str, Any]]] = None
+    volunteer: Optional[List[Dict[str, Any]]] = None
+
+    class Config:
+        extra = "allow" 
