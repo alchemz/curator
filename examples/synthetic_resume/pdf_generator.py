@@ -216,177 +216,137 @@ def create_pdf(resume_data: Dict, output_path: str) -> bool:
     pdf = ResumePDF()
     pdf.add_page()
     
-    # Name
-    candidate_name = resume_data["personal_info"]["name"]
-    pdf.set_font(pdf.font_family, 'B', 16)
-    pdf.cell(0, 10, pdf.sanitize_text(candidate_name), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+    # Personal Information - Name
+    pdf.set_font(pdf.font_family, 'B', 14)
+    pdf.cell(0, 10, resume_data["personal_info"]["name"], align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     
-    # Contact info on one line with separators
+    # Contact Information - Split into two lines if needed
     pdf.set_font(pdf.font_family, '', 10)
-    contact_info = []
     
-    # Phone and email
-    contact_info.append(pdf.sanitize_text(resume_data["personal_info"]["phone"]))
-    contact_info.append(pdf.sanitize_text(resume_data["personal_info"]["email"]))
-    contact_info.append(pdf.sanitize_text(resume_data["personal_info"]["location"]))
+    # First line: Email, Phone, Location
+    line1_items = [
+        resume_data["personal_info"]["email"],
+        resume_data["personal_info"]["phone"],
+        resume_data["personal_info"]["location"]
+    ]
+    pdf.cell(0, 5, " | ".join(line1_items), align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     
-    # First line: phone, email, location
-    pdf.cell(0, 5, " | ".join(contact_info), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
-    
-    # Second line: professional links
-    links = []
-    if resume_data["personal_info"]["linkedin"]:
-        links.append("LinkedIn")
+    # Second line: LinkedIn, GitHub, Portfolio
+    line2_items = []
+    if resume_data["personal_info"].get("linkedin"):
+        line2_items.append(resume_data["personal_info"]["linkedin"])
     if resume_data["personal_info"].get("github"):
-        links.append("GitHub")
+        line2_items.append(resume_data["personal_info"]["github"])
     if resume_data["personal_info"].get("portfolio"):
-        links.append("Portfolio")
+        line2_items.append(resume_data["personal_info"]["portfolio"])
     
-    if links:
-        pdf.cell(0, 5, " | ".join(links), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+    if line2_items:
+        pdf.cell(0, 5, " | ".join(line2_items), align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     
     # Summary
-    pdf.ln(10)
-    pdf.set_font(pdf.font_family, 'B', 12)
-    pdf.cell(0, 10, "Professional Summary", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.set_font(pdf.font_family, '', 10)
-    pdf.wrapped_cell(0, 5, resume_data["summary"])
+    if resume_data.get("summary"):
+        pdf.ln(3)  # Reduced spacing
+        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.cell(0, 8, "Summary", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_font(pdf.font_family, '', 10)
+        pdf.wrapped_cell(0, 5, resume_data["summary"])
     
     # Experience
-    pdf.ln(5)
-    pdf.set_font(pdf.font_family, 'B', 12)
-    pdf.cell(0, 10, "Professional Experience", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    
-    for exp in resume_data["experience"]:
-        pdf.set_font(pdf.font_family, 'B', 10)
-        pdf.wrapped_cell(0, 5, f"{pdf.sanitize_text(exp['title'])} at {pdf.sanitize_text(exp['company'])}")
+    if resume_data.get("experience"):
+        pdf.ln(3)  # Reduced spacing
+        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.cell(0, 8, "Experience", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font(pdf.font_family, '', 10)
-        pdf.wrapped_cell(0, 5, f"{pdf.sanitize_text(exp['location'])} | {pdf.sanitize_text(exp['start_date'])} - {pdf.sanitize_text(exp['end_date'])}")
-        for resp in exp["responsibilities"]:
-            pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(resp)}")
-        pdf.wrapped_cell(0, 5, f"Technologies: {', '.join(pdf.sanitize_text(tech) for tech in exp['technologies'])}")
-        pdf.ln(3)  # Reduced spacing between experiences
+        
+        for exp in resume_data["experience"]:
+            pdf.set_font(pdf.font_family, 'B', 10)
+            pdf.cell(0, 5, f"{exp['title']} - {exp['company']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font(pdf.font_family, 'I', 10)
+            pdf.cell(0, 5, f"{exp['location']} | {exp['start_date']} - {exp['end_date']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font(pdf.font_family, '', 10)
+            
+            for resp in exp["responsibilities"]:
+                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {resp}")
+            
+            if exp.get("technologies"):
+                pdf.wrapped_cell(0, 5, f"Technologies: {', '.join(exp['technologies'])}")
+            pdf.ln(2)  # Small space between experiences
     
     # Education
-    pdf.ln(5)
-    pdf.set_font(pdf.font_family, 'B', 12)
-    pdf.cell(0, 10, "Education", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    
-    for edu in resume_data["education"]:
-        pdf.set_font(pdf.font_family, 'B', 10)
-        pdf.wrapped_cell(0, 5, f"{pdf.sanitize_text(edu['degree'])} in {pdf.sanitize_text(edu['field'])}")
+    if resume_data.get("education"):
+        pdf.ln(3)  # Reduced spacing
+        pdf.set_font(pdf.font_family, 'B', 12)
+        pdf.cell(0, 8, "Education", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font(pdf.font_family, '', 10)
-        pdf.wrapped_cell(0, 5, f"{pdf.sanitize_text(edu['university'])} - {pdf.sanitize_text(edu['location'])} | {edu['year']}")
-        pdf.wrapped_cell(0, 5, f"GPA: {edu['gpa']}")
-        pdf.wrapped_cell(0, 5, f"Relevant Coursework: {', '.join(pdf.sanitize_text(course) for course in edu['relevant_coursework'])}")
-        pdf.ln(3)  # Reduced spacing between education entries
+        
+        for edu in resume_data["education"]:
+            pdf.set_font(pdf.font_family, 'B', 10)
+            pdf.cell(0, 5, f"{edu['degree']} in {edu['field']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font(pdf.font_family, 'I', 10)
+            pdf.cell(0, 5, f"{edu['university']} | {edu['location']} | {edu['year']} | GPA: {edu['gpa']}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font(pdf.font_family, '', 10)
+            if edu.get("relevant_coursework"):
+                pdf.wrapped_cell(0, 5, f"Relevant Coursework: {', '.join(edu['relevant_coursework'])}")
+            pdf.ln(2)  # Small space between education entries
     
     # Skills
-    pdf.ln(5)
-    pdf.set_font(pdf.font_family, 'B', 12)
-    pdf.cell(0, 10, "Skills", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.set_font(pdf.font_family, '', 10)
-    pdf.format_skills(resume_data["skills"])
-    
-    # Certifications
-    if resume_data.get("certifications"):
-        pdf.ln(5)
+    if resume_data.get("skills"):
+        pdf.ln(3)  # Reduced spacing
         pdf.set_font(pdf.font_family, 'B', 12)
-        pdf.cell(0, 10, "Certifications", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 8, "Skills", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font(pdf.font_family, '', 10)
-        for cert in resume_data["certifications"]:
-            pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(cert)}")
+        
+        # Group skills into chunks of 4-5 per line
+        skills = resume_data["skills"]
+        chunk_size = 4
+        for i in range(0, len(skills), chunk_size):
+            chunk = skills[i:i + chunk_size]
+            pdf.cell(0, 5, " | ".join(f"{pdf.bullet} {skill}" for skill in chunk), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     
-    # Add Publications section for ML/AI roles
+    # Publications for ML/AI roles
     if resume_data.get("publications"):
-        pdf.ln(5)
+        pdf.ln(3)  # Reduced spacing
         pdf.set_font(pdf.font_family, 'B', 12)
-        pdf.cell(0, 10, "Publications", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 8, "Publications", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font(pdf.font_family, '', 10)
         
         for pub in resume_data["publications"]:
             if isinstance(pub, dict):
-                # Handle structured publication entry
-                title = pub.get("title", "")
-                authors = pub.get("authors", [])
-                journal = pub.get("journal", "")
-                year = pub.get("year", "")
-                link = pub.get("link", "")
-                
                 pdf.set_font(pdf.font_family, 'B', 10)
-                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(title)}")
+                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(pub['title'])}")
                 pdf.set_font(pdf.font_family, '', 10)
-                if authors:
-                    pdf.wrapped_cell(0, 5, f"    Authors: {pdf.sanitize_text(', '.join(authors))}")
-                if journal:
-                    pdf.wrapped_cell(0, 5, f"    {pdf.sanitize_text(journal)} ({year})")
-                if link:
-                    pdf.wrapped_cell(0, 5, f"    Link: {pdf.sanitize_text(link)}")
+                if pub.get("authors"):
+                    pdf.wrapped_cell(0, 5, f"    Authors: {pdf.sanitize_text(', '.join(pub['authors']))}")
+                if pub.get("journal"):
+                    pdf.wrapped_cell(0, 5, f"    {pdf.sanitize_text(pub['journal'])} ({pub.get('year', '')})")
+                if pub.get("link"):
+                    pdf.wrapped_cell(0, 5, f"    Link: {pdf.sanitize_text(pub['link'])}")
             else:
-                # Handle simple string publication entry
                 pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(str(pub))}")
-            pdf.ln(2)
+            pdf.ln(2)  # Small space between publications
     
-    # Add Research Projects section for ML/AI roles
+    # Research Projects
     if resume_data.get("research_projects"):
-        pdf.ln(5)
+        pdf.ln(3)  # Reduced spacing
         pdf.set_font(pdf.font_family, 'B', 12)
-        pdf.cell(0, 10, "Research Projects", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 8, "Research Projects", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font(pdf.font_family, '', 10)
         
         for project in resume_data["research_projects"]:
             if isinstance(project, dict):
-                # Handle structured project entry
-                title = project.get("title", "")
-                description = project.get("description", "")
-                technologies = project.get("technologies", [])
-                results = project.get("results", [])
-                
                 pdf.set_font(pdf.font_family, 'B', 10)
-                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(title)}")
+                pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(project['title'])}")
                 pdf.set_font(pdf.font_family, '', 10)
-                if description:
-                    pdf.wrapped_cell(0, 5, f"    {pdf.sanitize_text(description)}")
-                if technologies:
-                    pdf.wrapped_cell(0, 5, f"    Technologies: {pdf.sanitize_text(', '.join(technologies))}")
-                if results:
-                    for result in results:
+                if project.get("description"):
+                    pdf.wrapped_cell(0, 5, f"    {pdf.sanitize_text(project['description'])}")
+                if project.get("technologies"):
+                    pdf.wrapped_cell(0, 5, f"    Technologies: {pdf.sanitize_text(', '.join(project['technologies']))}")
+                if project.get("results"):
+                    for result in project["results"]:
                         pdf.wrapped_cell(0, 5, f"    - {pdf.sanitize_text(result)}")
             else:
-                # Handle simple string project entry
                 pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(str(project))}")
-            pdf.ln(2)
-    
-    # Add any other dynamic sections that might be present
-    dynamic_sections = {
-        "awards": "Awards & Honors",
-        "languages": "Languages",
-        "open_source": "Open Source Contributions",
-        "system_architecture": "System Architecture",
-        "infrastructure": "Infrastructure & DevOps",
-        "security": "Security",
-        "app_store": "App Store Publications",
-        "volunteer": "Volunteer Work"
-    }
-    
-    for section_key, section_title in dynamic_sections.items():
-        if resume_data.get(section_key):
-            pdf.ln(5)
-            pdf.set_font(pdf.font_family, 'B', 12)
-            pdf.cell(0, 10, section_title, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-            pdf.set_font(pdf.font_family, '', 10)
-            
-            section_data = resume_data[section_key]
-            if isinstance(section_data, list):
-                for item in section_data:
-                    if isinstance(item, dict):
-                        # Handle structured items
-                        for key, value in item.items():
-                            pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(key)}: {pdf.sanitize_text(str(value))}")
-                    else:
-                        # Handle simple string items
-                        pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(str(item))}")
-                    pdf.ln(2)
+            pdf.ln(2)  # Small space between projects
     
     try:
         pdf.output(output_path)
