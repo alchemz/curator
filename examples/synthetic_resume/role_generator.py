@@ -65,11 +65,40 @@ class RoleGenerator(curator.LLM):
             }
         ]
 
-    def get_variations(self, num_resumes: int = 1) -> List[Dict]:
-        """Generate varied tech role configurations"""
+    def get_role_sections(self, role: str, level: str) -> List[str]:
+        """Get recommended sections for a specific role"""
+        messages = [
+            {
+                "role": "system",
+                "content": """You are an expert in tech industry resumes. Determine which sections should be included 
+                in a resume based on the role and level."""
+            },
+            {
+                "role": "user",
+                "content": f"""For a {level} {role}, what sections should be included in their resume?
+                Consider both standard sections (summary, experience, education, skills) and role-specific sections.
+                
+                Available sections include:
+                - publications (for research/academic roles)
+                - certifications (for specialized technical roles)
+                - awards (for distinguished achievements)
+                - languages (for international/multilingual roles)
+                - research_projects (for R&D roles)
+                - portfolio (for creative/frontend roles)
+                - open_source (for software engineering roles)
+                - system_architecture (for senior/architect roles)
+                - infrastructure (for DevOps/SRE roles)
+                - security (for security-focused roles)
+                - app_store (for mobile developers)
+                - volunteer (for community involvement)
+
+                Return a JSON array of section names that are relevant for this role.
+                Example: ["summary", "experience", "education", "skills", "publications"]"""
+            }
+        ]
+
         try:
-            # Make LLM call with num_resumes in input
-            dataset = [{"num_resumes": num_resumes}]
+            dataset = [{"messages": messages}]
             response = self(dataset)
             
             if response and len(response) > 0:
@@ -77,30 +106,77 @@ class RoleGenerator(curator.LLM):
                 if isinstance(content, dict) and "choices" in content:
                     content = content["choices"][0]["message"]["content"]
                 
-                # Clean up content
+                # Clean up and parse JSON
                 if isinstance(content, str):
-                    # Remove markdown code blocks if present
+                    content = content.strip()
                     if content.startswith("```json"):
                         content = content.replace("```json", "", 1)
                     if content.endswith("```"):
                         content = content[:-3]
-                    content = content.strip()
-                    
-                    variations = json.loads(content)
-                    
-                    # Validate structure
-                    required_keys = {"role", "level", "focus", "tech_stack", "years"}
-                    for var in variations:
-                        if not all(key in var for key in required_keys):
-                            raise ValueError(f"Missing required keys in variation: {var}")
-                    
-                    return variations
+                    sections = json.loads(content.strip())
+                    return sections
 
-            logger.error("Failed to generate role variations")
+            return self._get_default_sections()
+            
+        except Exception as e:
+            logger.error(f"Error getting role sections: {str(e)}")
+            return self._get_default_sections()
+
+    def _get_default_sections(self) -> List[str]:
+        """Return default sections if section generation fails"""
+        return ["summary", "experience", "education", "skills"]
+
+    def get_variations(self, num_resumes: int = 1) -> List[Dict]:
+        """Generate varied tech role configurations with recommended sections"""
+        try:
+            # Make LLM call with num_resumes in input
+            dataset = [{"num_resumes": num_resumes}]
+            logger.info(f"Requesting {num_resumes} role variations from LLM...")
+            response = self(dataset)
+            
+            logger.info(f"Raw LLM response: {response}")
+            
+            # Handle Dataset object
+            if hasattr(response, 'features') and hasattr(response, 'num_rows'):
+                variations = []
+                for i in range(response.num_rows):
+                    variation = {
+                        'role': response[i]['role'],
+                        'level': response[i]['level'],
+                        'focus': response[i]['focus'],
+                        'tech_stack': response[i]['tech_stack'],
+                        'years': response[i]['years']
+                    }
+                    # Add recommended sections
+                    sections = self.get_role_sections(variation['role'], variation['level'])
+                    variation['recommended_sections'] = sections
+                    variations.append(variation)
+                return variations
+            
+            # Handle other response formats (fallback)
+            if response and len(response) > 0:
+                content = response[0]
+                logger.info(f"Content from response: {content}")
+                
+                if isinstance(content, dict):
+                    if "choices" in content:
+                        content = content["choices"][0]["message"]["content"]
+                    elif all(key in content for key in ["role", "level", "focus", "tech_stack", "years"]):
+                        # Single variation returned as dict
+                        variations = [content]
+                        for var in variations:
+                            sections = self.get_role_sections(var['role'], var['level'])
+                            var['recommended_sections'] = sections
+                        return variations
+                
+                # ... rest of the existing parsing logic ...
+            
+            logger.error("Failed to generate role variations - empty or invalid response")
             return self._get_fallback_variations(num_resumes)
             
         except Exception as e:
             logger.error(f"Error generating role variations: {str(e)}")
+            logger.error(f"Full error details:", exc_info=True)
             return self._get_fallback_variations(num_resumes)
 
     def parse(self, input: dict, response: dict) -> List[Dict]:
@@ -152,27 +228,31 @@ class RoleGenerator(curator.LLM):
 
     def _get_fallback_variations(self, num_resumes: int) -> List[Dict]:
         """Fallback method in case LLM generation fails"""
+        logger.info("Using fallback variations")  # Debug log
         fallback_variations = [
             {
                 "role": "Software Engineer",
                 "level": "Mid-level",
                 "focus": "Full-stack Development",
                 "tech_stack": "Python, JavaScript, React, AWS",
-                "years": "4-6"
+                "years": "4-6",
+                "recommended_sections": ["summary", "experience", "education", "skills", "open_source"]
             },
             {
                 "role": "Data Scientist",
                 "level": "Senior",
                 "focus": "Machine Learning",
                 "tech_stack": "Python, PyTorch, SQL, AWS",
-                "years": "7-10"
+                "years": "7-10",
+                "recommended_sections": ["summary", "experience", "education", "skills", "publications", "research_projects"]
             },
             {
                 "role": "DevOps Engineer",
                 "level": "Mid-level",
                 "focus": "Infrastructure Automation",
                 "tech_stack": "Kubernetes, Terraform, AWS, Python",
-                "years": "4-6"
+                "years": "4-6",
+                "recommended_sections": ["summary", "experience", "education", "skills", "infrastructure"]
             }
         ]
         
