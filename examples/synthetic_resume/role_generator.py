@@ -71,7 +71,7 @@ class RoleGenerator(curator.LLM):
             {
                 "role": "system",
                 "content": """You are an expert in tech industry resumes. For ML/AI roles, always include research-oriented 
-                sections like publications and research_projects. Determine which sections should be included in a resume 
+                sections like publications and projects. Determine which sections should be included in a resume 
                 based on the role and level."""
             },
             {
@@ -81,11 +81,11 @@ class RoleGenerator(curator.LLM):
                 For ML/AI roles (Machine Learning Engineer, Data Scientist, Research Engineer, AI Engineer), 
                 ALWAYS include:
                 - publications
-                - research_projects
+                - projects
                 
                 Available sections include:
                 - publications (REQUIRED for ML/AI roles, research positions)
-                - research_projects (REQUIRED for ML/AI roles, R&D positions)
+                - projects (REQUIRED for ML/AI roles, R&D positions)
                 - certifications (for specialized technical roles)
                 - awards (for distinguished achievements)
                 - languages (for international/multilingual roles)
@@ -100,7 +100,7 @@ class RoleGenerator(curator.LLM):
                 Standard sections (summary, experience, education, skills) are always included.
                 
                 Return a JSON array of section names that are relevant for this role.
-                Example for ML Engineer: ["summary", "experience", "education", "skills", "publications", "research_projects"]"""
+                Example for ML Engineer: ["summary", "experience", "education", "skills", "publications", "projects"]"""
             }
         ]
 
@@ -127,8 +127,8 @@ class RoleGenerator(curator.LLM):
                     if any(ml_term in role.lower() for ml_term in ['ml', 'machine learning', 'ai', 'data scientist']):
                         if 'publications' not in sections:
                             sections.append('publications')
-                        if 'research_projects' not in sections:
-                            sections.append('research_projects')
+                        if 'projects' not in sections:
+                            sections.append('projects')
                         logger.info(f"Added required ML sections for {role}")
                     
                     return sections
@@ -171,8 +171,8 @@ class RoleGenerator(curator.LLM):
                     if any(ml_term in variation['role'].lower() for ml_term in ['ml', 'machine learning', 'ai', 'data scientist']):
                         if 'publications' not in sections:
                             sections.append('publications')
-                        if 'research_projects' not in sections:
-                            sections.append('research_projects')
+                        if 'projects' not in sections:
+                            sections.append('projects')
                         variation['requires_publications'] = True
                         logger.info(f"Added mandatory publications for {variation['role']}")
                     
@@ -271,7 +271,7 @@ class RoleGenerator(curator.LLM):
                 "focus": "Machine Learning",
                 "tech_stack": "Python, PyTorch, SQL, AWS",
                 "years": "7-10",
-                "recommended_sections": ["summary", "experience", "education", "skills", "publications", "research_projects"]
+                "recommended_sections": ["summary", "experience", "education", "skills", "publications", "projects"]
             },
             {
                 "role": "DevOps Engineer",

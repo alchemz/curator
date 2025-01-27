@@ -50,7 +50,7 @@ class Resume(BaseModel):
     certifications: Optional[List[Dict[str, Any]]] = Field(None, description="Professional certifications")
     awards: Optional[List[str]] = Field(None, description="Professional awards and recognition")
     languages: Optional[List[Dict[str, str]]] = Field(None, description="Language proficiencies")
-    research_projects: Optional[List[Dict[str, Any]]] = Field(None, description="Research project details")
+    projects: Optional[List[Dict[str, Any]]] = Field(None, description="Research project details")
     portfolio: Optional[List[Dict[str, Any]]] = Field(None, description="Portfolio projects")
     open_source: Optional[List[Dict[str, Any]]] = Field(None, description="Open source contributions")
     system_architecture: Optional[List[Dict[str, Any]]] = Field(None, description="System architecture experience")

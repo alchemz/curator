@@ -255,12 +255,12 @@ def create_pdf(resume_data: Dict, output_path: str) -> bool:
             pdf.ln(2)  # Small space between publications
     
     # Research Projects
-    if resume_data.get("research_projects"):
+    if resume_data.get("projects"):
         pdf.ln(3)
         pdf.set_font(pdf.font_family, 'B', font_style["section_size"])
         pdf.cell(0, 8, "Research Projects", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
-        for project in resume_data["research_projects"]:
+        for project in resume_data["projects"]:
             if isinstance(project, dict):
                 pdf.set_font(pdf.font_family, 'B', font_style["body_size"])
                 pdf.wrapped_cell(0, 5, f"{pdf.bullet} {pdf.sanitize_text(project['title'])}")
