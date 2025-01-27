@@ -32,64 +32,68 @@ class ResumeGenerationOrchestrator:
     
     def generate_resumes(self, num_resumes: int = 5) -> None:
         """Generate specified number of resumes"""
+        successful = 0
         try:
-            # Generate role variations
-            logger.info(f"Generating {num_resumes} role variations...")
             variations = self.role_generator.get_variations(num_resumes)
             
-            successful = 0
-            # Generate resumes for each role
             for i, variation in enumerate(variations, 1):
-                logger.info(f"Generating resume {i}/{num_resumes} for {variation['level']} {variation['role']}...")
                 try:
-                    # Generate unique name
                     unique_name = self.name_generator.get_unique_name()
                     variation['name'] = unique_name
                     
-                    # Generate resume content
                     resume_data = self.resume_generator([{'role_variation': variation}])
-                    
                     if not resume_data or len(resume_data) == 0:
                         logger.error(f"No data generated for resume {i}")
                         continue
                     
-                    # Extract resume data
                     resume = resume_data[0]
-                    
-                    # Ensure generated resume uses the unique name
                     resume["personal_info"]["name"] = unique_name
                     
-                    # Create safe filenames
-                    safe_name = unique_name.lower().replace(' ', '_')
-                    safe_name = re.sub(r'[^a-z0-9_]', '', safe_name)
-                    role_name = variation['role'].lower().replace(' ', '_')
+                    # Generate filenames
+                    safe_name = self._get_safe_filename(unique_name)
+                    role_name = self._get_safe_filename(variation['role'])
                     
-                    # Save JSON
-                    json_path = os.path.join(self.output_dir, f"resume_{safe_name}_{role_name}.json")
-                    with open(json_path, 'w') as f:
-                        json.dump(resume, f, indent=2)
-                    logger.info(f"Saved JSON to: {json_path}")
-                    
-                    # Generate PDF
-                    pdf_path = os.path.join(self.output_dir, f"resume_{safe_name}_{role_name}.pdf")
-                    if create_pdf(resume, pdf_path):
-                        logger.info(f"Created PDF: {pdf_path}")
+                    # Save files
+                    if self._save_resume_files(resume, safe_name, role_name):
                         successful += 1
-                    else:
-                        logger.error(f"Failed to create PDF for resume {i}")
-                    
+                        
                 except Exception as e:
                     logger.error(f"Error generating resume {i}: {str(e)}")
                     continue
-            
-            # Print summary
-            logger.info(f"\nGeneration complete!")
-            logger.info(f"Successfully generated {successful} out of {num_resumes} resumes")
-            logger.info(f"Files are saved in: {self.output_dir}")
-            
+                
         except Exception as e:
             logger.error(f"Error in resume generation: {str(e)}")
             raise
+        finally:
+            logger.info(f"\nGeneration complete!")
+            logger.info(f"Successfully generated {successful} out of {num_resumes} resumes")
+            logger.info(f"Files are saved in: {self.output_dir}")
+
+    def _get_safe_filename(self, text: str) -> str:
+        """Generate safe filename from text"""
+        return re.sub(r'[^a-z0-9_]', '', text.lower().replace(' ', '_'))
+
+    def _save_resume_files(self, resume: dict, safe_name: str, role_name: str) -> bool:
+        """Save resume files and return success status"""
+        try:
+            # Save JSON
+            json_path = os.path.join(self.output_dir, f"resume_{safe_name}_{role_name}.json")
+            with open(json_path, 'w') as f:
+                json.dump(resume, f, indent=2)
+            logger.info(f"Saved JSON to: {json_path}")
+            
+            # Generate PDF
+            pdf_path = os.path.join(self.output_dir, f"resume_{safe_name}_{role_name}.pdf")
+            if create_pdf(resume, pdf_path):
+                logger.info(f"Created PDF: {pdf_path}")
+                return True
+                
+            logger.error("Failed to create PDF")
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error saving files: {str(e)}")
+            return False
 
 def main():
     """Main entry point"""
