@@ -1,6 +1,6 @@
 import logging
 import json
-from typing import List, Dict
+from typing import List, Dict, Any
 from bespokelabs import curator
 
 logger = logging.getLogger(__name__)
@@ -285,4 +285,16 @@ class RoleGenerator(curator.LLM):
         
         # Return requested number of variations (with repeats if necessary)
         return fallback_variations[:num_resumes] if num_resumes <= len(fallback_variations) else \
-               fallback_variations * (num_resumes // len(fallback_variations) + 1) 
+               fallback_variations * (num_resumes // len(fallback_variations) + 1)
+
+    def _validate_variations(self, variations: List[Dict]) -> bool:
+        """Validate variation structure
+        
+        Args:
+            variations: List of variation dictionaries to validate
+            
+        Returns:
+            bool: True if all variations contain required keys
+        """
+        required_keys = {"role", "level", "focus", "tech_stack", "years"}
+        return all(all(key in var for key in required_keys) for var in variations) 
